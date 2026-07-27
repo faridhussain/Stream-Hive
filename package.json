@@ -1,0 +1,17 @@
+{
+  "name": "stream-hive",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [
+    "javascript",
+    "backend",
+    "frontend"
+  ],
+  "license": "ISC",
+  "author": "Farid Hussain",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
