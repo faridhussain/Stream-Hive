@@ -1,17 +1,20 @@
 {
-  "name": "stream-hive",
-  "version": "1.0.0",
-  "description": "",
-  "keywords": [
-    "javascript",
-    "backend",
-    "frontend"
-  ],
-  "license": "ISC",
-  "author": "Farid Hussain",
-  "type": "commonjs",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  }
+    "name": "stream-hive",
+    "version": "1.0.0",
+    "description": "",
+    "keywords": [
+        "javascript",
+        "backend",
+        "frontend"
+    ],
+    "license": "ISC",
+    "author": "Farid Hussain",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "dev": "nodemon src/index.js"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.14"
+    }
 }
