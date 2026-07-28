@@ -20,7 +20,20 @@ dotenv.config({
 
 // establish a connection with mongodb
 // this should always happen before starting the Express server because most of our application depends on the database being available
-connectDB();
+connectDB()
+    .then(() => {
+        // if an unexpected server-level error occurs after the server has started (for eg -> a port conflict or another runtime server error), this callback executes
+        app.on('error', (error) => {
+            console.log('Error: ', error);
+            throw error;
+        });
+        app.listen(process.env.PORT || 8000, () => {
+            console.log(`Server is running at port ${process.env.PORT}`);
+        });
+    })
+    .catch((error) => {
+        console.log('MongoDB connection failed! ', error);
+    });
 
 // this is one way to start an Express application
 // in this approach, everything is written inside a single file:
