@@ -11,6 +11,11 @@ import dotenv from 'dotenv';
 // import the function responsible for connecting to the mongodb database
 import connectDB from './db/index.js';
 
+// import the configures express application
+// all middlewares, routes and application settings are defined in app.js
+// index.js imports this app and starts the server after the db connection is established successfully
+import { app } from './app.js';
+
 // load all environment variables into process.env
 // the 'path' property tells dotenv where our environment file is located
 // after this runs, values such as: process.env.PORT, process.env.MONGODB_URI and more become available throughout the application
