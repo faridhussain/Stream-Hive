@@ -19,6 +19,7 @@ import { app } from './app.js';
 // load all environment variables into process.env
 // the 'path' property tells dotenv where our environment file is located
 // after this runs, values such as: process.env.PORT, process.env.MONGODB_URI and more become available throughout the application
+
 dotenv.config({
     path: './env',
 });

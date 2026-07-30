@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';    // used to create schema and models for mongodb
+import mongoose, { Schema } from 'mongoose'; // used to create schema and models for mongodb
 // jsonwebtoken(jwt) -> used to generate and verify login tokens, after a user logs in successfully, we create a token so that user doesn't need to log in again on every request
 import jwt from 'jsonwebtoken';
 // used to hash (encrypt) passwords before storing them in the db and compare passwords during login
@@ -53,10 +53,9 @@ const userSchema = new Schema(
 );
 
 // runs automatically before a user document is saved
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next();    // if password wasn't changed, skip hashing
+userSchema.pre('save', async function () {
+    if (!this.isModified('password')) return next(); // if password wasn't changed, skip hashing
     this.password = await bcrypt.hash(this.password, 10); // hash the password before storing it in the database
-    next(); // continue saving the document
 });
 
 // custom method attached to every user document, compares the entered password with the hashed password stored in the db
@@ -74,7 +73,7 @@ userSchema.methods.generateAccessToken = function () {
             username: this.username,
             fullName: this.fullName,
         },
-        process.env.ACCESS_TOKEN_SECRET,    // secret key used to sign the token
+        process.env.ACCESS_TOKEN_SECRET, // secret key used to sign the token
         {
             expiresIn: process.env.ACCESS_TOKEN_EXPIRY, // token expiry time
         }
@@ -86,9 +85,9 @@ userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         // refresh token only needs the user's id
         {
-            _id: this._id
+            _id: this._id,
         },
-        process.env.REFRESH_TOKEN_SECRET,   // secret key used to sign the refresh token
+        process.env.REFRESH_TOKEN_SECRET, // secret key used to sign the refresh token
         {
             expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
         }

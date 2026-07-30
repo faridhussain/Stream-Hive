@@ -1,10 +1,10 @@
 // this file contains controller functions related to users
 // controllers contain the business logic of the application, they receive the request, process it and send the appropriate response
-import { asyncHandler } from '../utils/asyncHandler.js';    // catches async errors automatically
-import { ApiError } from '../utils/ApiError.js';    // used to throw standardized api errors
+import { asyncHandler } from '../utils/asyncHandler.js'; // catches async errors automatically
+import { ApiError } from '../utils/ApiError.js'; // used to throw standardized api errors
 import { User } from '../models/user.model.js'; // user model for db operations
-import { uploadOnCloudinary } from '../utils/cloudinary.js';    // uploads files to cloudinary
-import { ApiResponse } from '../utils/ApiResponse.js';  // used to send standardized success responses
+import { uploadOnCloudinary } from '../utils/cloudinary.js'; // uploads files to cloudinary
+import { ApiResponse } from '../utils/ApiResponse.js'; // used to send standardized success responses
 
 // controller responsible for registering a new user
 const registerUser = asyncHandler(async (req, res) => {
@@ -22,7 +22,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // check whether a user already exists (search by either username or email)
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{ username }, { email }],
     });
     if (existedUser) {
@@ -32,10 +32,15 @@ const registerUser = asyncHandler(async (req, res) => {
     // get uploaded file paths from multer, multer stores uploaded files temporarily on our server
     // these paths will be used to upload the files to cloudinary
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
+    // cover image is optional, if a cover image was uploaded, get its local file path
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path
+    }
 
     // avatar is mandatory
-    if (avatarLocalPath) {
+    if (!avatarLocalPath) {
         throw new ApiError(400, 'Avatar file is required');
     }
 
@@ -54,21 +59,26 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImage: coverImage?.url || '',
         email,
         password,
-        fullName
-    })
+        fullName,
+    });
 
     // fetch the newly created user (exclude sensitive fields before sending the response)
     const createdUser = await User.findById(user._id).select(
         '-password -refreshToken'
-    )
-    if(!createdUser) {
-        throw new ApiError(500, 'Something went wrong while registering the user')
+    );
+    if (!createdUser) {
+        throw new ApiError(
+            500,
+            'Something went wrong while registering the user'
+        );
     }
 
     // send a success response to the client
-    return res.status(201).json(
-        new ApiResponse(200, createdUser, 'User registered successfully')
-    )
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(200, createdUser, 'User registered successfully')
+        );
 });
 
 export { registerUser };

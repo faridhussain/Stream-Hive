@@ -3,7 +3,7 @@
 
 import { Router } from 'express'; // import the Router class from express, Router allows us to group related routes together instead of defining every route inside app.js
 import { registerUser } from '../controllers/user.controller.js'; // import the controller responsible for registering a new user
-import { upload } from '../middlewares/multer.middleware.js';   // import the multer middleware used to handle file uploads
+import { upload } from '../middlewares/multer.middleware.js'; // import the multer middleware used to handle file uploads
 
 const router = Router(); // create a new router instance, all user-related routes will be attached to this router
 
