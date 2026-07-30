@@ -163,4 +163,32 @@ const loginUser = asyncHandler(async (req, res) => {
         );
 });
 
-export { registerUser, loginUser };
+// controller responsible for logging out the currently logged-in user
+const logoutUser = asyncHandler(async (req, res) => {
+    // remove the refresh token from the db, this prevents the user from generating new access tokens using the old refresh token
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                refreshToken: undefined,
+            },
+        },
+        { new: true }
+    );
+
+    // cookie options used while clearing the cookies, these should match the options used when the cookies were created
+    const options = {
+        httpOnly: true,
+        secure: true,
+    };
+
+    // remove both access and refresh token cookies from the user's browser
+    // finally send a success response indicating the user has been logged out
+    return res
+        .status(200)
+        .clearCookie('accessToken', options)
+        .clearCookie('refreshToken', options)
+        .json(new ApiResponse(200, {}, 'User logged out'));
+});
+
+export { registerUser, loginUser, logoutUser };

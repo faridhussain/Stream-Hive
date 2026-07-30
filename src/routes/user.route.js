@@ -2,8 +2,9 @@
 // routes map incoming requests to their corresponding controller functions, they decide which controller should handle a specific request
 
 import { Router } from 'express'; // import the Router class from express, Router allows us to group related routes together instead of defining every route inside app.js
-import { registerUser } from '../controllers/user.controller.js'; // import the controller responsible for registering a new user
+import { loginUser, logoutUser, registerUser } from '../controllers/user.controller.js'; // import the controllers responsible for registering, logging and logout a user
 import { upload } from '../middlewares/multer.middleware.js'; // import the multer middleware used to handle file uploads
+import { verifyJWT } from '../middlewares/auth.middleware.js';
 
 const router = Router(); // create a new router instance, all user-related routes will be attached to this router
 
@@ -20,5 +21,9 @@ router.route('/register').post(
     ]),
     registerUser
 );
+
+router.route('/login').post(loginUser)
+
+router.route('/logout').post(verifyJWT, logoutUser)
 
 export default router;
