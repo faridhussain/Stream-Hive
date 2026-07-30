@@ -6,6 +6,26 @@ import { User } from '../models/user.model.js'; // user model for db operations
 import { uploadOnCloudinary } from '../utils/cloudinary.js'; // uploads files to cloudinary
 import { ApiResponse } from '../utils/ApiResponse.js'; // used to send standardized success responses
 
+// generate new access and refresh tokens for a user, the refresh token is also saved in the db so it can be verified later
+const generateAccessAndRefreshTokens = async (userId) => {
+    try {
+        const user = await User.findById(userId); // find the user by id
+        // generate jwt tokens using the custom methods defined in the user model
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
+
+        user.refreshToken = refreshToken; // save the newly generated refresh token in the db
+        await user.save({ validateBeforeSave: false }); // save only the refresh token without running schema validations
+
+        return { accessToken, refreshToken }; // return both tokens to the caller
+    } catch (error) {
+        throw new ApiError(
+            500,
+            'Something went wrong while generating refresh and access token'
+        );
+    }
+};
+
 // controller responsible for registering a new user
 const registerUser = asyncHandler(async (req, res) => {
     // get user data sent from the client (req.body) contains all the text fields sent in the request
@@ -35,8 +55,12 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // cover image is optional, if a cover image was uploaded, get its local file path
     let coverImageLocalPath;
-    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
-        coverImageLocalPath = req.files.coverImage[0].path
+    if (
+        req.files &&
+        Array.isArray(req.files.coverImage) &&
+        req.files.coverImage.length > 0
+    ) {
+        coverImageLocalPath = req.files.coverImage[0].path;
     }
 
     // avatar is mandatory
@@ -81,4 +105,62 @@ const registerUser = asyncHandler(async (req, res) => {
         );
 });
 
-export { registerUser };
+// controller responsible for logging in an existing user
+const loginUser = asyncHandler(async (req, res) => {
+    const { email, username, password } = req.body; // get login credentials sent by the client
+
+    if (!email && !username) {
+        throw new ApiError(400, 'username or email is required');
+    }
+
+    // find the user using either the username or email
+    const user = await User.findOne({
+        $or: [{ username }, { email }],
+    });
+    // if no matching user is found, stop the login process
+    if (!user) {
+        throw new ApiError(404, 'User does not exist');
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password); // compare the entered password with the hashed password stored in the db
+    if (!isPasswordValid) {
+        throw new ApiError(401, 'Invalid user credentials');
+    }
+
+    // generate new access and refresh tokens for the authenticated user
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+        user._id
+    );
+
+    // fetch the user again, excluding sensitive fields before sending the response
+    const loggedInUser = await User.findById(user._id).select(
+        '-password -refreshToken'
+    );
+
+    // cookie options to improve security
+    // httpOnly prevents JS from accessing the cookies
+    // secure ensures cookies are sent only over https
+    const options = {
+        httpOnly: true,
+        secure: true,
+    };
+
+    // send the token as cookies and also include them in the response body
+    return res
+        .status(200)
+        .cookie('accessToken', accessToken, options)
+        .cookie('refreshToken', refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    user: loggedInUser,
+                    accessToken,
+                    refreshToken,
+                },
+                'User logged in successfully'
+            )
+        );
+});
+
+export { registerUser, loginUser };
