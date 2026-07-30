@@ -55,7 +55,7 @@ const userSchema = new Schema(
 // runs automatically before a user document is saved
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();    // if password wasn't changed, skip hashing
-    this.password = bcrypt.hash(this.password, 10); // hash the password before storing it in the database
+    this.password = await bcrypt.hash(this.password, 10); // hash the password before storing it in the database
     next(); // continue saving the document
 });
 
