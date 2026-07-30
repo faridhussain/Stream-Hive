@@ -54,17 +54,18 @@ const userSchema = new Schema(
 
 // runs automatically before a user document is saved
 userSchema.pre('save', async function () {
-    if (!this.isModified('password')) return next(); // if password wasn't changed, skip hashing
+    if (!this.isModified('password')) return; // if password wasn't changed, skip hashing
     this.password = await bcrypt.hash(this.password, 10); // hash the password before storing it in the database
 });
 
-// custom method attached to every user document, compares the entered password with the hashed password stored in the db
+// custom method available on every user document, compares the entered password with the hashed password stored in the db
 userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password);
 };
 
 // custom method to generate a short-lived access token, this token is sent with protected requests to verify the user's identity
 userSchema.methods.generateAccessToken = function () {
+    // create a digitally sign a jwt using the payload and secret key
     return jwt.sign(
         // data stored inside the jwt payload
         {
@@ -82,6 +83,7 @@ userSchema.methods.generateAccessToken = function () {
 
 // custom method to generate a long-lived refresh token used to generate a new access token after the old one expires
 userSchema.methods.generateRefreshToken = function () {
+    // create and digitally sign a refresh token
     return jwt.sign(
         // refresh token only needs the user's id
         {

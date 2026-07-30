@@ -8,22 +8,12 @@ import { ApiResponse } from '../utils/ApiResponse.js'; // used to send standardi
 
 // generate new access and refresh tokens for a user, the refresh token is also saved in the db so it can be verified later
 const generateAccessAndRefreshTokens = async (userId) => {
-    try {
-        const user = await User.findById(userId); // find the user by id
-        // generate jwt tokens using the custom methods defined in the user model
-        const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
-
-        user.refreshToken = refreshToken; // save the newly generated refresh token in the db
-        await user.save({ validateBeforeSave: false }); // save only the refresh token without running schema validations
-
-        return { accessToken, refreshToken }; // return both tokens to the caller
-    } catch (error) {
-        throw new ApiError(
-            500,
-            'Something went wrong while generating refresh and access token'
-        );
-    }
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+    user.refreshToken = refreshToken; // store the newly generated refresh token in the db, this allows us to verify it later when the user requests a new access token
+    await user.save({ validateBeforeSave: false });
+    return { accessToken, refreshToken };
 };
 
 // controller responsible for registering a new user
@@ -122,7 +112,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(404, 'User does not exist');
     }
 
-    const isPasswordValid = await user.isPasswordCorrect(password); // compare the entered password with the hashed password stored in the db
+    const isPasswordValid = await user.isPasswordCorrect(password); // verify whether the entered password matches the hashed password stored in the db
     if (!isPasswordValid) {
         throw new ApiError(401, 'Invalid user credentials');
     }
@@ -139,7 +129,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     // cookie options to improve security
     // httpOnly prevents JS from accessing the cookies
-    // secure ensures cookies are sent only over https
+    // secure ensures the browser sends these cookies only over https connections
     const options = {
         httpOnly: true,
         secure: true,
@@ -165,7 +155,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
 // controller responsible for logging out the currently logged-in user
 const logoutUser = asyncHandler(async (req, res) => {
-    // remove the refresh token from the db, this prevents the user from generating new access tokens using the old refresh token
+    // remove the refresh token from the db
+    // once removed, the old refresh token can no longer be used to generate new access tokens
     await User.findByIdAndUpdate(
         req.user._id,
         {

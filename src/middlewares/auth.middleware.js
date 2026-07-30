@@ -1,7 +1,7 @@
 // this middleware verifies whether the user is authenticated using a jwt access token, it runs before protected routes and allows only logged-in users to access them
-import { User } from '../models/user.model'; // user model used to fetch the authenticated user from the db
-import { ApiError } from '../utils/ApiError'; // used to throw standardized api errors
-import { asyncHandler } from '../utils/asyncHandler'; // catches async errors automatically
+import { User } from '../models/user.model.js'; // user model used to fetch the authenticated user from the db
+import { ApiError } from '../utils/ApiError.js'; // used to throw standardized api errors
+import { asyncHandler } from '../utils/asyncHandler.js'; // catches async errors automatically
 import jwt from 'jsonwebtoken'; // used to verify and decode jwt tokens
 
 // middleware responsible for verifying the user's access token
@@ -30,7 +30,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         }
 
         req.user = user; // attach the authenticated user to the request object, now every next controller can access req.user
-        next(); // pass control to the next middleware or controller
+        next(); // continue the request by passing control to the next middleware or controller
     } catch (error) {
         throw new ApiError(401, error?.message || 'Invalid access token');
     }
