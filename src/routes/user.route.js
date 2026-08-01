@@ -2,7 +2,12 @@
 // routes map incoming requests to their corresponding controller functions, they decide which controller should handle a specific request
 
 import { Router } from 'express'; // import the Router class from express, Router allows us to group related routes together instead of defining every route inside app.js
-import { loginUser, logoutUser, registerUser } from '../controllers/user.controller.js'; // import the controllers responsible for registering, logging and logout a user
+import {
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    registerUser,
+} from '../controllers/user.controller.js';
 import { upload } from '../middlewares/multer.middleware.js'; // import the multer middleware used to handle file uploads
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 
@@ -22,8 +27,10 @@ router.route('/register').post(
     registerUser
 );
 
-router.route('/login').post(loginUser)
+router.route('/login').post(loginUser);
 
-router.route('/logout').post(verifyJWT, logoutUser)
+router.route('/logout').post(verifyJWT, logoutUser);
+
+router.route('/refresh-token').post(refreshAccessToken);
 
 export default router;
