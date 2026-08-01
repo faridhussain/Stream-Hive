@@ -243,7 +243,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 const changeCurrentPassword = asyncHandler(async (req, res) => {
     const { oldPassword, newPassword } = req.body; // get the old password and the new password sent by the client
 
-    const user = await User.findById(req.user?.id); // fetch the currently authenticated user from the db, req.user is added by the verifyJWT middleware
+    const user = await User.findById(req.user?._id); // fetch the currently authenticated user from the db, req.user is added by the verifyJWT middleware
 
     const isPasswordCorrect = await user.isPasswordCorrect(oldPassword); // verify whether the old password entered by the user is correct
     // if old password is incorrect, deny the request
@@ -271,6 +271,34 @@ const getCurrentUser = asyncHandler(async (req, res) => {
         );
 });
 
+// controller responsible for updating the logged-in user's account details
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { fullName, email } = req.body; // get the updated account details sent by the client
+    // both full name and email are required
+    if (!fullName || !email) {
+        throw new ApiError(400, 'All fields are required');
+    }
+
+    // update the user's full name and email in the db
+    // $set updates only the specified fields without affecting the rest of the document
+    // { new: true } returns the updated document instead of the old one
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                fullName,
+                email,
+            },
+        },
+        { new: true }
+    ).select('-password');
+
+    // send the updated user information back to the client
+    res.status(200).json(
+        new ApiResponse(200, user, 'Account detail updated successfully')
+    );
+});
+
 export {
     registerUser,
     loginUser,
@@ -278,4 +306,5 @@ export {
     refreshAccessToken,
     changeCurrentPassword,
     getCurrentUser,
+    updateAccountDetails,
 };
