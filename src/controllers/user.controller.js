@@ -241,17 +241,17 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 // controller responsible for allowing the currently logged-in user to change their password
 const changeCurrentPassword = asyncHandler(async (req, res) => {
-    const { oldPassword, newPassword } = req.body;  // get the old password and the new password sent by the client
+    const { oldPassword, newPassword } = req.body; // get the old password and the new password sent by the client
 
     const user = await User.findById(req.user?.id); // fetch the currently authenticated user from the db, req.user is added by the verifyJWT middleware
 
-    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);    // verify whether the old password entered by the user is correct
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword); // verify whether the old password entered by the user is correct
     // if old password is incorrect, deny the request
     if (!isPasswordCorrect) {
         throw new ApiError(401, 'Invalid password');
     }
 
-    user.password = newPassword;    // replace the old password with the new one, the pre('save') middleware will automatically hash it before saving
+    user.password = newPassword; // replace the old password with the new one, the pre('save') middleware will automatically hash it before saving
     await user.save({ validateBeforeSave: false }); // save the updated password in the db
 
     // send a success response
@@ -260,4 +260,22 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, 'Password changed successfully'));
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+// controller responsible for returning the details of the currently authenticated user
+const getCurrentUser = asyncHandler(async (req, res) => {
+    // req.user is attached by the verifyJWT middleware
+    // since the user has already been authenticated, simply return their information
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, req.user, 'current user fetched successfully')
+        );
+});
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+};
