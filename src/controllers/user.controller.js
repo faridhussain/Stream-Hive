@@ -299,6 +299,39 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     );
 });
 
+// controller responsible for updating the logged-in user's avatar
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    // get the path of the uploaded avatar image, multer stores the uploaded file temporarily on the local server
+    const avatarLocalPath = req.file?.path;
+    // avatar image is required
+    if (!avatarLocalPath) {
+        throw new ApiError(400, 'Avatar file is missing');
+    }
+
+    // upload the avatar image to cloudinary
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    // if the upload fails, stop the request
+    if (!avatar.url) {
+        throw new ApiError(400, 'Error while uploading on avatar');
+    }
+
+    // update the user's avatar url in the db, store the cloudinary url instead of the local file path
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                avatar: avatar.url,
+            },
+        },
+        { new: true }
+    ).select('-password');
+
+    // send the updated user info back to the client
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, 'Avatar updated successfully'));
+});
+
 export {
     registerUser,
     loginUser,
@@ -307,4 +340,5 @@ export {
     changeCurrentPassword,
     getCurrentUser,
     updateAccountDetails,
+    updateUserAvatar
 };
